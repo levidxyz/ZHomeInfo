@@ -1,4 +1,4 @@
-# ZHomeInfo
+# :house: ZHomeInfo
 ## Tasks
 
 - [x] Learn [Go](https://golang.org/) syntax, principles

@@ -11,7 +11,7 @@
 - [ ] **Host** web app publicly on Heroku or similar
 - [x] Put **source code** up on Github
 
-## Issues
+## Known Issues
 
 - `xml.NewDecoder().Decode()` doesn't throw decoding errors
 

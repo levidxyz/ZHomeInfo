@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/xml"
+	"errors"
 	"net/http"
 	"net/url"
 )
@@ -12,35 +13,47 @@ func main() {
 }
 
 // Handler the request and write a response
-func getInfo(resp http.ResponseWriter, req *http.Request) {
-	queryValues := req.URL.Query()
-	apiQuery := buildAPIQuery(queryValues)
-
-	homeInfo, err := callGetSearchResults(apiQuery)
-	if err != nil {
-		http.Error(resp, err.Error(), http.StatusInternalServerError)
+func getInfo(response http.ResponseWriter, request *http.Request) {
+	apiRequest, queryError := buildAPIRequest(request.URL.Query())
+	if queryError != nil {
+		http.Error(response, queryError.Error(), http.StatusUnprocessableEntity)
 		return
 	}
-	resp.Header().Set(contentTypeKey, xmlContentType)
-	xml.NewEncoder(resp).Encode(homeInfo)
+
+	apiResponse, apiError := http.Get(apiRequest)
+	if apiError != nil {
+		http.Error(response, apiError.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	homeInfo, xmlError := decodeAPIResponse(apiResponse)
+	if xmlError != nil {
+		http.Error(response, xmlError.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set(contentTypeKey, xmlContentType)
+	xml.NewEncoder(response).Encode(homeInfo)
 }
 
 // Parse the request URL to construct the API query
-func buildAPIQuery(queryValues url.Values) string {
+func buildAPIRequest(queryValues url.Values) (string, error) {
+	address := queryValues.Get(addressParam)
+	cityStateZip := queryValues.Get(cityStateZipParam)
+	if address == "" || cityStateZip == "" {
+		return "", errors.New("required query parameters are missing")
+	}
+
 	return getSearchResultsURL +
-		"?" + zwsIDParam + "=" + zwsID +
-		"&" + addressParam + "=" + queryValues.Get(addressParam) +
-		"&" + cityStateZipParam + "=" + queryValues.Get(cityStateZipParam)
+			"?" + zwsIDParam + "=" + zwsID +
+			"&" + addressParam + "=" + address +
+			"&" + cityStateZipParam + "=" + cityStateZip,
+		nil
 }
 
-// Calls GetSearchResults API and populates homeInfo with response
-func callGetSearchResults(url string) (searchResults, error) {
-	resp, apiErr := http.Get(url)
-	if apiErr != nil {
-		return searchResults{}, apiErr
-	}
+// Decode the GetSearchResults API  XML response
+func decodeAPIResponse(resp *http.Response) (searchResults, error) {
 	defer resp.Body.Close()
-
 	var homeInfo searchResults
 	xmlErr := xml.NewDecoder(resp.Body).Decode(&homeInfo)
 	if xmlErr != nil {

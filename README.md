@@ -12,10 +12,6 @@
 - [x] Put **source code** up on Github
 - [x] Create **README**
 
-## Known Issues
-
-- `xml.NewDecoder().Decode()` doesn't throw decoding errors if the API response structure is not as expected
-
 ## Notes
 
 - This project was put on hold after one night's work.
@@ -30,14 +26,18 @@
 
 4. Create a file called `config.go` and populate it with your API key:
 
-   1. ```go
-      package main
-      
-      const zwsID = "<your zwsID>"
-      ```
+   ```go
+   package main
+   
+   const zwsID = "<your zwsID>"
+   ```
 
 5. `go build`
 
 6. `./ZHomeInfo`
 
 7. In another terminal, `curl "http://localhost:8080/?address=<your address>&citystatezip=<your city and state or zip>"`
+
+## Known Issues
+
+- `xml.NewDecoder().Decode()` doesn't throw decoding errors if the API response structure is not as expected
